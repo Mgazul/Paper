@@ -25,7 +25,8 @@ versionjson="$workdir/Minecraft/$minecraftversion/$minecraftversion.json"
 if [ ! -f "$versionjson" ]; then
     echo "Downloading $minecraftversion JSON Data"
     verescaped=$(echo ${minecraftversion} | sed 's/\./\\./g')
-    jsonurl=$(curl -s "https://launchermeta.mojang.com/mc/game/version_manifest.json" | grep -oE "https://.*?${verescaped}.json")
+    verentry=$(curl -s "https://launchermeta.mojang.com/mc/game/version_manifest.json" | grep -oE "{\"id\": \"${verescaped}\".*${verescaped}\.json")
+    jsonurl=$(echo $verentry | grep -oE https:\/\/.*\.json)
     curl -o "$versionjson" "$jsonurl"
     echo "$versionjson - $jsonurl"
 fi
@@ -80,37 +81,37 @@ if [ ! -d "$classdir" ]; then
     set -e
 fi
 
-needsDecomp=0
-if [ ! -f "$forgeflowercachefile" ]; then
-    needsDecomp=1
-elif [ "$(cat ${forgeflowercachefile})" != "$forgeflowercachevalue" ]; then
-    needsDecomp=1
-fi
-if [ "$needsDecomp" == "1" ]; then
-    # our local cache is now invalidated, we can update forgeflower to get better deobfuscation
-    rm -rf "$forgedecompiledir/net"
-fi
+#needsDecomp=0
+#if [ ! -f "$forgeflowercachefile" ]; then
+#    needsDecomp=1
+#elif [ "$(cat ${forgeflowercachefile})" != "$forgeflowercachevalue" ]; then
+#    needsDecomp=1
+#fi
+#if [ "$needsDecomp" == "1" ]; then
+#    # our local cache is now invalidated, we can update forgeflower to get better deobfuscation
+#    rm -rf "$forgedecompiledir/net"
+#fi
 
-# Forge (for Paper mc-dev imports, and dev src folders for unimported files)
-if [ ! -d "$forgedecompiledir/net" ] ; then
-    echo "Decompiling classes (stage 1)..."
-    cd "$basedir"
-
-    if [ ! -f "$forgeflowerbin" ]; then
-        echo "Downloading ForgeFlower ($forgeflowerversion)..."
-        curl -s -o "$forgeflowerbin" "$forgeflowerurl"
-    fi
-
-    set +e
-    java -Ddecomp.renameparams=true -jar "$forgeflowerbin" ${forgefloweroptions} -ind='    ' "$classdir" "$forgedecompiledir"
-    if [ "$?" != "0" ]; then
-        rm -rf "$forgedecompiledir/net"
-        echo "Failed to decompile classes."
-        exit 1
-    fi
-    echo "$forgeflowercachevalue" > "$forgeflowercachefile"
-    set -e
-fi
+## Forge (for Paper mc-dev imports, and dev src folders for unimported files)
+#if [ ! -d "$forgedecompiledir/net" ] ; then
+#    echo "Decompiling classes (stage 1)..."
+#    cd "$basedir"
+#
+#    if [ ! -f "$forgeflowerbin" ]; then
+#        echo "Downloading ForgeFlower ($forgeflowerversion)..."
+#        curl -s -o "$forgeflowerbin" "$forgeflowerurl"
+#    fi
+#
+#    set +e
+#    java -Ddecomp.renameparams=true -jar "$forgeflowerbin" ${forgefloweroptions} -ind='    ' "$classdir" "$forgedecompiledir"
+#    if [ "$?" != "0" ]; then
+#        rm -rf "$forgedecompiledir/net"
+#        echo "Failed to decompile classes."
+#        exit 1
+#    fi
+#    echo "$forgeflowercachevalue" > "$forgeflowercachefile"
+#    set -e
+#fi
 
 # Spigot (for CraftBukkit patches)
 
@@ -123,7 +124,7 @@ if [ ! -d "$spigotdecompiledir/net" ]; then
     echo "Decompiling classes (stage 2)..."
     cd "$basedir"
     set +e
-    java -jar "$workdir/BuildData/bin/fernflower.jar" -dgs=1 -hdc=0 -asc=1 -udv=0 "$classdir" "$spigotdecompiledir"
+    java -jar "$workdir/BuildData/bin/fernflower.jar" -dgs=1 -hdc=0 -asc=1 -udv=0 -rsy=1 "$classdir" "$spigotdecompiledir"
     if [ "$?" != "0" ]; then
         rm -rf "$spigotdecompiledir/net"
         echo "Failed to decompile classes."

@@ -1,4 +1,4 @@
-From 2944b419d467efe317df621fe747cb22aaf5c30b Mon Sep 17 00:00:00 2001
+From b85bbfb42e8b12aa8e73894b0ad478c734d12f1d Mon Sep 17 00:00:00 2001
 From: Aikar <aikar@aikar.co>
 Date: Wed, 2 Mar 2016 00:52:31 -0600
 Subject: [PATCH] Lighting Queue
@@ -28,10 +28,10 @@ index 145cb274b0..eff9dcf54f 100644
  
      public static Timing getTickList(WorldServer worldserver, String timingsType) {
 diff --git a/src/main/java/com/destroystokyo/paper/PaperConfig.java b/src/main/java/com/destroystokyo/paper/PaperConfig.java
-index 8be079e26e..0968852922 100644
+index 7691409f6c..cfcc244672 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperConfig.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperConfig.java
-@@ -185,6 +185,13 @@ public class PaperConfig {
+@@ -191,6 +191,13 @@ public class PaperConfig {
          return config.getString(path, config.getString(path));
      }
  
@@ -46,12 +46,12 @@ index 8be079e26e..0968852922 100644
          boolean timings = getBoolean("timings.enabled", true);
          boolean verboseTimings = getBoolean("timings.verbose", true);
 diff --git a/src/main/java/com/destroystokyo/paper/PaperWorldConfig.java b/src/main/java/com/destroystokyo/paper/PaperWorldConfig.java
-index 39d565db1f..8f6f0288be 100644
+index a797a57671..59d82fa4fb 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperWorldConfig.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperWorldConfig.java
-@@ -130,4 +130,12 @@ public class PaperWorldConfig {
-         netherVoidTopDamage = getBoolean( "nether-ceiling-void-damage", false );
-         log("Top of the nether void damage: " + netherVoidTopDamage);
+@@ -139,4 +139,12 @@ public class PaperWorldConfig {
+             }
+         }
      }
 +
 +    public boolean queueLightUpdates;
@@ -63,10 +63,10 @@ index 39d565db1f..8f6f0288be 100644
 +    }
  }
 diff --git a/src/main/java/net/minecraft/server/Chunk.java b/src/main/java/net/minecraft/server/Chunk.java
-index af181d4bd7..6fa379e580 100644
+index e15ed21f67..a9aa13fbf8 100644
 --- a/src/main/java/net/minecraft/server/Chunk.java
 +++ b/src/main/java/net/minecraft/server/Chunk.java
-@@ -90,6 +90,7 @@ public class Chunk implements IChunkAccess {
+@@ -94,6 +94,7 @@ public class Chunk implements IChunkAccess {
              return removed;
          }
      }
@@ -74,16 +74,16 @@ index af181d4bd7..6fa379e580 100644
      // Paper end
      public boolean areNeighborsLoaded(final int radius) {
          switch (radius) {
-@@ -279,7 +280,7 @@ public class Chunk implements IChunkAccess {
+@@ -284,7 +285,7 @@ public class Chunk implements IChunkAccess {
  
      private void g(boolean flag) {
-         this.world.methodProfiler.a("recheckGaps");
+         this.world.methodProfiler.enter("recheckGaps");
 -        if (this.world.areChunksLoaded(new BlockPosition(this.locX * 16 + 8, 0, this.locZ * 16 + 8), 16)) {
 +        if (this.areNeighborsLoaded(1)) { // Paper
              for (int i = 0; i < 16; ++i) {
                  for (int j = 0; j < 16; ++j) {
                      if (this.g[i + j * 16]) {
-@@ -330,7 +331,7 @@ public class Chunk implements IChunkAccess {
+@@ -335,7 +336,7 @@ public class Chunk implements IChunkAccess {
      }
  
      private void a(int i, int j, int k, int l) {
@@ -92,7 +92,7 @@ index af181d4bd7..6fa379e580 100644
              for (int i1 = k; i1 < l; ++i1) {
                  this.world.c(EnumSkyBlock.SKY, new BlockPosition(i, i1, j));
              }
-@@ -530,6 +531,7 @@ public class Chunk implements IChunkAccess {
+@@ -535,6 +536,7 @@ public class Chunk implements IChunkAccess {
                  if (flag1) {
                      this.initLighting();
                  } else {
@@ -100,7 +100,7 @@ index af181d4bd7..6fa379e580 100644
                      int i1 = iblockdata.b(this.world, blockposition);
                      int j1 = iblockdata1.b(this.world, blockposition);
  
-@@ -537,6 +539,7 @@ public class Chunk implements IChunkAccess {
+@@ -542,6 +544,7 @@ public class Chunk implements IChunkAccess {
                      if (i1 != j1 && (i1 < j1 || this.getBrightness(EnumSkyBlock.SKY, blockposition) > 0 || this.getBrightness(EnumSkyBlock.BLOCK, blockposition) > 0)) {
                          this.c(i, k);
                      }
@@ -108,7 +108,7 @@ index af181d4bd7..6fa379e580 100644
                  }
  
                  TileEntity tileentity;
-@@ -1374,6 +1377,16 @@ public class Chunk implements IChunkAccess {
+@@ -1358,6 +1361,16 @@ public class Chunk implements IChunkAccess {
          return this.D == 8;
      }
  
@@ -126,10 +126,10 @@ index af181d4bd7..6fa379e580 100644
  
          IMMEDIATE, QUEUED, CHECK;
 diff --git a/src/main/java/net/minecraft/server/ChunkProviderServer.java b/src/main/java/net/minecraft/server/ChunkProviderServer.java
-index 31ed3e43a5..0b03c6266a 100644
+index eb83e20d50..c2ecc034e8 100644
 --- a/src/main/java/net/minecraft/server/ChunkProviderServer.java
 +++ b/src/main/java/net/minecraft/server/ChunkProviderServer.java
-@@ -314,6 +314,7 @@ public class ChunkProviderServer implements IChunkProvider {
+@@ -313,6 +313,7 @@ public class ChunkProviderServer implements IChunkProvider {
              return false;
          }
          save = event.isSaveChunk();
@@ -138,21 +138,21 @@ index 31ed3e43a5..0b03c6266a 100644
          // Update neighbor counts
          for (int x = -2; x < 3; x++) {
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index d6ea4ae532..5086fe4027 100644
+index 7ca7b9f3ac..00f1c36e99 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -894,7 +894,7 @@ public abstract class MinecraftServer implements IAsyncTaskHandler, IMojangStati
+@@ -890,7 +890,7 @@ public abstract class MinecraftServer implements IAsyncTaskHandler, IMojangStati
      protected void a(BooleanSupplier booleansupplier) {
          co.aikar.timings.TimingsManager.FULL_SERVER_TICK.startTiming(); // Paper
          this.slackActivityAccountant.tickStarted(); // Spigot
--        long i = SystemUtils.c();
-+        long i = SystemUtils.c(); long startTime = i; // Paper
+-        long i = SystemUtils.getMonotonicNanos();
++        long i = SystemUtils.getMonotonicNanos(); long startTime = i; // Paper
  
          ++this.ticks;
          if (this.S) {
-@@ -952,6 +952,7 @@ public abstract class MinecraftServer implements IAsyncTaskHandler, IMojangStati
-         this.methodProfiler.e();
-         this.methodProfiler.e();
+@@ -948,6 +948,7 @@ public abstract class MinecraftServer implements IAsyncTaskHandler, IMojangStati
+         this.methodProfiler.exit();
+         this.methodProfiler.exit();
          org.spigotmc.WatchdogThread.tick(); // Spigot
 +        PaperLightingQueue.processQueue(startTime); // Paper
          this.slackActivityAccountant.tickEnded(l); // Spigot
@@ -160,7 +160,7 @@ index d6ea4ae532..5086fe4027 100644
      }
 diff --git a/src/main/java/net/minecraft/server/PaperLightingQueue.java b/src/main/java/net/minecraft/server/PaperLightingQueue.java
 new file mode 100644
-index 0000000000..5fabc5b55c
+index 0000000000..9783f3a0d9
 --- /dev/null
 +++ b/src/main/java/net/minecraft/server/PaperLightingQueue.java
 @@ -0,0 +1,98 @@
@@ -189,7 +189,7 @@ index 0000000000..5fabc5b55c
 +                continue;
 +            }
 +
-+            ObjectCollection<Chunk> loadedChunks = ((WorldServer) world).getChunkProviderServer().chunks.values();
++            ObjectCollection<Chunk> loadedChunks = ((WorldServer) world).getChunkProvider().chunks.values();
 +            for (Chunk chunk : loadedChunks.toArray(new Chunk[0])) {
 +                if (chunk.lightingQueue.processQueue(startTime, maxTickTime)) {
 +                    break START;
@@ -263,18 +263,18 @@ index 0000000000..5fabc5b55c
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/server/World.java b/src/main/java/net/minecraft/server/World.java
-index 499d64ea2c..e06da6bef9 100644
+index b10e4c409d..f3755fcfbe 100644
 --- a/src/main/java/net/minecraft/server/World.java
 +++ b/src/main/java/net/minecraft/server/World.java
-@@ -335,7 +335,7 @@ public abstract class World implements IEntityAccess, GeneratorAccess, IIBlockAc
+@@ -329,7 +329,7 @@ public abstract class World implements IEntityAccess, GeneratorAccess, IIBlockAc
  
                  if (iblockdata2.b(this, blockposition) != iblockdata1.b(this, blockposition) || iblockdata2.e() != iblockdata1.e()) {
-                     this.methodProfiler.a("checkLight");
+                     this.methodProfiler.enter("checkLight");
 -                    this.r(blockposition);
 +                    chunk.runOrQueueLightUpdate(() -> this.r(blockposition)); // Paper - Queue light update
-                     this.methodProfiler.e();
+                     this.methodProfiler.exit();
                  }
  
 -- 
-2.19.0
+2.21.0
 

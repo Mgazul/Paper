@@ -1,4 +1,4 @@
-From 2cb5b1bda018ce49ec34c527b63a8848990a01ea Mon Sep 17 00:00:00 2001
+From ab777ae0adb9a8e9eaaef3e76bb9b531b0cb4d64 Mon Sep 17 00:00:00 2001
 From: Aikar <aikar@aikar.co>
 Date: Wed, 4 Jul 2018 02:25:48 -0400
 Subject: [PATCH] Entity#getChunk API
@@ -6,17 +6,18 @@ Subject: [PATCH] Entity#getChunk API
 Get the chunk the entity is currently registered to
 
 diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
-index 6bdbd7ab..66904a0c 100644
+index 6dd0623bf..81d92145e 100644
 --- a/src/main/java/org/bukkit/entity/Entity.java
 +++ b/src/main/java/org/bukkit/entity/Entity.java
-@@ -1,5 +1,6 @@
+@@ -1,5 +1,7 @@
  package org.bukkit.entity;
  
 +import org.bukkit.Chunk;
- import org.bukkit.Location;
++import org.bukkit.Location;
  import org.bukkit.EntityEffect;
+ import org.bukkit.Location;
  import org.bukkit.Nameable;
-@@ -563,5 +564,12 @@ public interface Entity extends Metadatable, CommandSender, Nameable {
+@@ -611,5 +613,13 @@ public interface Entity extends Metadatable, CommandSender, Nameable {
       * @return True if entity spawned from a mob spawner
       */
      boolean fromMobSpawner();
@@ -26,9 +27,10 @@ index 6bdbd7ab..66904a0c 100644
 +     *
 +     * @return The current, or most recent chunk if the entity is invalid (which may load the chunk)
 +     */
++    @NotNull
 +    Chunk getChunk();
      // Paper end
  }
 -- 
-2.19.0
+2.21.0
 

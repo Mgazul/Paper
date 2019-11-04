@@ -12,7 +12,8 @@ gitcmd="git -c commit.gpgsign=false"
 workdir="$basedir/work"
 minecraftversion=$(cat "$workdir/BuildData/info.json"  | grep minecraftVersion | cut -d '"' -f 4)
 decompiledir="$workdir/Minecraft/$minecraftversion/forge"
-
+# replace for now
+decompiledir="$workdir/Minecraft/$minecraftversion/spigot"
 export importedmcdev=""
 function import {
     export importedmcdev="$importedmcdev $1"
@@ -45,7 +46,7 @@ function importLibrary {
             exit 1
         fi
         export MODLOG="$MODLOG  Imported $file from $lib\n";
-        cp "$base" "$target" || exit 1
+        sed 's/\r$//' "$base" > "$target" || exit 1
     done
 }
 
@@ -102,18 +103,9 @@ done
 # These must always be mapped manually, no automatic stuff
 #
 #             # group    # lib          # prefix               # many files
-importLibrary com.mojang datafixerupper com/mojang/datafixers \
-    schemas/Schema.java \
-    DataFixerUpper.java \
-    NamedChoiceFinder.java \
-    functions/PointFree.java \
-    types/Type.java \
-    types/DynamicOps.java \
-    types/templates/Tag.java \
-    types/templates/TaggedChoice.java \
-    types/families/RecursiveTypeFamily.java
 
 # dont forget \ at end of each line but last
+importLibrary com.mojang authlib com/mojang/authlib yggdrasil/YggdrasilGameProfileRepository.java
 
 ########################################################
 ########################################################
