@@ -48,7 +48,9 @@ import BlockChest
 import BlockFalling
 import BlockFurnace
 import BlockIceFrost
+import BlockObserver
 import BlockPosition
+import BlockRedstoneComparator
 import BlockSnowBlock
 import BlockStateEnum
 import ChunkCache
@@ -89,12 +91,15 @@ import LotoSelectorEntry
 import NavigationAbstract
 import NBTTagCompound
 import NBTTagList
+import Packet
+import PacketEncoder
 import PacketPlayInUseEntity
 import PacketPlayOutMapChunk
 import PacketPlayOutPlayerListHeaderFooter
 import PacketPlayOutScoreboardTeam
 import PacketPlayOutTitle
 import PacketPlayOutUpdateTime
+import PacketPlayOutWindowItems
 import PathfinderAbstract
 import PathfinderGoal
 import PathfinderGoalFloat
